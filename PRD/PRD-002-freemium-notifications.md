@@ -16,21 +16,41 @@ The current MVP logs emergency notifications to console only. To make the app pr
 ### Solution
 
 Implement a freemium notification system:
-- **Free Tier**: Email notifications (low/no cost to operate)
-- **Premium Tier ($0.99)**: SMS + messaging apps (WhatsApp, Telegram, Signal)
+- **Free Tier**: Email + Telegram notifications (free/negligible cost to operate)
+- **Premium Tier ($1.99)**: SMS + WhatsApp (paid messaging channels)
 
 ### Business Model
 
 | Tier | Price | Notification Channels |
 |------|-------|----------------------|
-| Free | $0 | Email only |
-| Premium | $0.99 (one-time) | Email + SMS + WhatsApp + Telegram + Signal |
+| Free | $0 | Email + Telegram |
+| Premium | $1.99 (one-time) | Email + Telegram + SMS + WhatsApp |
 
-**Why $0.99 one-time?**
+**Why $1.99 one-time?**
 - Low barrier to entry encourages conversion
-- Covers SMS costs for typical user lifecycle
+- Better margin to cover SMS/WhatsApp costs sustainably
 - Simple pricing, no subscription fatigue
 - Users more likely to pay for peace of mind
+
+**Why Email + Telegram in Free Tier?**
+- Both are free/negligible to send
+- Provides genuine value to free users
+- Premium only gates channels that cost us money (SMS, WhatsApp)
+
+### Rate Limiting
+
+To prevent abuse and control costs, emergency notifications are rate limited:
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Max emergencies per week | 1 | Prevents accidental/abuse triggers |
+| Cooldown after emergency | 7 days | User must check in to reset |
+| Max contacts | 5 | Limits per-event cost exposure |
+
+If rate limit is hit:
+- User sees explanation in app
+- Email-only fallback (lowest cost)
+- Resets after cooldown period
 
 ---
 
@@ -92,13 +112,26 @@ Please try to contact them or check on their wellbeing.
 This is an automated emergency alert from Are You Dead Yet?
 ```
 
-#### 2. Premium Unlock (In-App Purchase)
+#### 2. Telegram Notifications (Free Tier)
+
+**User Experience:**
+- All users can connect Telegram contacts
+- Emergency contacts receive Telegram message via bot
+- Setup: User generates link, contact clicks to start bot
+
+**Technical Implementation:**
+- Telegram Bot API (free to send)
+- Create bot via @BotFather
+- User flow: Generate unique link → Contact clicks → Starts bot → Linked
+- Store Telegram chat_id for each contact
+
+#### 3. Premium Unlock (In-App Purchase)
 
 **User Experience:**
 - Clear upgrade prompt in Settings
-- Shows benefits of premium (SMS + messaging apps)
+- Shows benefits of premium (SMS + WhatsApp)
 - Standard iOS in-app purchase flow
-- One-time $0.99 payment
+- One-time $1.99 payment
 - Instant unlock, no restore needed (receipt validated)
 - "Premium" badge in Settings after purchase
 
@@ -108,7 +141,7 @@ This is an automated emergency alert from Are You Dead Yet?
 - Receipt validation (on-device or server)
 - Persist unlock state in UserDefaults + Keychain (backup)
 
-#### 3. SMS Notifications (Premium)
+#### 4. SMS Notifications (Premium)
 
 **User Experience:**
 - Premium users can add phone numbers for SMS
@@ -127,7 +160,7 @@ ALERT: [User Name] hasn't checked in for [X] days.
 They may need help. Last location: [maps.apple.com/...]
 ```
 
-#### 4. WhatsApp Notifications (Premium)
+#### 5. WhatsApp Notifications (Premium)
 
 **User Experience:**
 - Premium users can add WhatsApp numbers
@@ -140,20 +173,7 @@ They may need help. Last location: [maps.apple.com/...]
 - Template messages must be pre-approved
 - Cost: ~$0.005-0.05 per message
 
-#### 5. Telegram Notifications (Premium)
-
-**User Experience:**
-- User connects their Telegram account (via bot)
-- Emergency contacts receive Telegram message
-- Setup: Contact shares a link, recipient starts bot
-
-**Technical Implementation:**
-- Telegram Bot API (free to send)
-- Create bot via @BotFather
-- User flow: Generate unique link → Contact clicks → Starts bot → Linked
-- Store Telegram chat_id for each contact
-
-#### 6. Signal Notifications (Premium)
+#### 6. Signal Notifications (Coming Soon)
 
 **User Experience:**
 - Premium users can add Signal numbers
@@ -166,6 +186,20 @@ They may need help. Last location: [maps.apple.com/...]
   - Wait for official API
   - Consider as "coming soon" initially
 - **Recommendation:** Launch as "Coming Soon" in v1
+
+#### 7. Rate Limiting (Abuse Prevention)
+
+**User Experience:**
+- Max 1 emergency notification per 7 days
+- Max 5 emergency contacts
+- Clear messaging when limit is reached
+- Cooldown timer visible in app
+
+**Technical Implementation:**
+- Track last emergency timestamp in UserDefaults
+- Backend enforces rate limits
+- If limit exceeded: Email-only fallback (lowest cost)
+- Rate limit resets after successful check-in post-cooldown
 
 ### P1 - Should Have
 
@@ -304,22 +338,26 @@ enum NotificationChannel: String, Codable, CaseIterable {
 **Cost Analysis (per emergency event):**
 - Average contacts per user: 2-3
 - Average channels per contact: 2
-- Cost per event: ~$0.05-0.20
-- Break-even: ~5-20 events per $0.99 payment
+- Cost per event (premium): ~$0.12-0.18
+- Cost per event (free): ~$0.002 (email only)
+- Net revenue after Apple cut (30%): ~$1.39
+- Break-even: ~8-12 premium emergency events per user
+- Rate limit (1/week) ensures sustainable cost structure
 
 ---
 
 ## User Flows
 
-### Free User: Add Contact with Email
+### Free User: Add Contact with Email/Telegram
 
 ```
 1. User opens Settings
 2. Taps "Add Emergency Contact"
-3. Enters name and email (required for free tier)
-4. Sees note: "Upgrade to Premium for SMS & messaging apps"
-5. Saves contact
-6. Email channel auto-enabled
+3. Enters name and email (required)
+4. Optionally sets up Telegram (free)
+5. Sees note: "Upgrade to Premium for SMS & WhatsApp"
+6. Saves contact
+7. Email + Telegram channels available
 ```
 
 ### Free User: Upgrade to Premium
@@ -330,14 +368,12 @@ enum NotificationChannel: String, Codable, CaseIterable {
 3. Sees benefits:
    - SMS notifications
    - WhatsApp messages
-   - Telegram alerts
-   - Signal messages (coming soon)
-4. Taps "Unlock for $0.99"
+4. Taps "Unlock for $1.99"
 5. iOS payment sheet appears
 6. Completes purchase
 7. Confetti animation (optional)
 8. Premium badge appears
-9. SMS/messaging options now available for contacts
+9. SMS/WhatsApp options now available for contacts
 ```
 
 ### Premium User: Add Contact with Multiple Channels
@@ -351,18 +387,18 @@ enum NotificationChannel: String, Codable, CaseIterable {
    - Phone (optional)
    - At least one contact method required
 4. Selects channels:
-   - ☑ Email
-   - ☑ SMS
-   - ☑ WhatsApp
-   - ☐ Telegram (requires setup)
+   - ☑ Email (free)
+   - ☑ Telegram (free)
+   - ☑ SMS (premium)
+   - ☑ WhatsApp (premium)
    - ☐ Signal (coming soon)
 5. Saves contact
 ```
 
-### Telegram Setup Flow
+### Telegram Setup Flow (Free for All Users)
 
 ```
-1. Premium user adds contact with Telegram
+1. User adds contact with Telegram
 2. App generates unique link: aydy.app/tg/abc123
 3. User sends link to emergency contact
 4. Contact clicks link → Opens Telegram → Starts bot
@@ -376,24 +412,26 @@ enum NotificationChannel: String, Codable, CaseIterable {
 ```
 1. 48 hours pass without check-in
 2. Background task fires
-3. App gets current location
-4. App calls backend: POST /api/emergency-notify
-5. Backend processes each contact:
-   - Check user's premium status
+3. Check rate limit (max 1 per 7 days)
+4. If rate limited → Email-only fallback
+5. App gets current location
+6. App calls backend: POST /api/emergency-notify
+7. Backend processes each contact:
    - For each enabled channel:
-     - Email → SendGrid
+     - Email → SendGrid (free)
+     - Telegram → Bot API (free)
      - SMS → Twilio (premium only)
      - WhatsApp → Twilio/Meta (premium only)
-     - Telegram → Bot API (premium only)
-6. Backend returns delivery status
-7. App shows critical local notification
+8. Backend returns delivery status
+9. App shows critical local notification
+10. Rate limit cooldown starts (7 days)
 ```
 
 ---
 
 ## Design Decisions
 
-### Why One-Time $0.99 vs Subscription?
+### Why One-Time $1.99 vs Subscription?
 
 | One-Time | Subscription |
 |----------|--------------|
@@ -402,22 +440,28 @@ enum NotificationChannel: String, Codable, CaseIterable {
 | Matches user mental model ("I paid for the app") | More complex to manage |
 | Simpler implementation | Churn management needed |
 
-**Decision:** One-time purchase for MVP. Can add subscription tier later for power users (family plans, etc.).
+**Decision:** One-time purchase for MVP at $1.99 (better margin than $0.99). Can add subscription tier later for power users (family plans, etc.).
 
-### Why Email is Free?
+### Why Email + Telegram in Free Tier?
 
-- Email sending costs are negligible ($0.001 or less)
-- Provides real value in free tier
-- Users more likely to upgrade if free tier is useful
-- Ensures everyone can get notified, regardless of payment
+- Both are free/negligible to send
+- Provides genuine value to free users
+- Premium only gates channels that cost money (SMS, WhatsApp)
+- Increases trust and conversion by offering real functionality for free
 
-### Why Include Multiple Messaging Apps?
+### Why SMS + WhatsApp are Premium?
 
-- Users have different preferences globally
-- WhatsApp dominant in many countries
-- Telegram popular among tech users
-- SMS is universal fallback
-- More channels = higher delivery success
+- SMS costs $0.01-0.08 per message
+- WhatsApp costs $0.005-0.05 per message
+- Premium revenue covers these operational costs
+- Users who need SMS/WhatsApp are willing to pay for reliability
+
+### Why Rate Limiting?
+
+- Prevents abuse (accidental or intentional)
+- Controls cost exposure per user
+- 1 emergency per 7 days is reasonable for real emergencies
+- Email fallback ensures user is never completely blocked
 
 ### Why Signal is "Coming Soon"?
 
@@ -438,9 +482,9 @@ enum NotificationChannel: String, Codable, CaseIterable {
 ├─────────────────────────────────────┤
 │                                     │
 │ ┌─────────────────────────────────┐ │
-│ │ ⭐ Upgrade to Premium    $0.99  │ │
+│ │ ⭐ Upgrade to Premium    $1.99  │ │
 │ │                                 │ │
-│ │ Unlock SMS, WhatsApp, Telegram  │ │
+│ │ Unlock SMS & WhatsApp           │ │
 │ │ notifications for your contacts │ │
 │ └─────────────────────────────────┘ │
 │                                     │
@@ -448,10 +492,17 @@ enum NotificationChannel: String, Codable, CaseIterable {
 │ ┌─────────────────────────────────┐ │
 │ │ 👤 Mom                          │ │
 │ │    📧 Email ✓                   │ │
+│ │    ✈️ Telegram ✓                │ │
 │ │    📱 SMS 🔒                    │ │
+│ │    💬 WhatsApp 🔒               │ │
 │ └─────────────────────────────────┘ │
 │ ┌─────────────────────────────────┐ │
 │ │ ➕ Add Contact                  │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ RATE LIMIT                          │
+│ ┌─────────────────────────────────┐ │
+│ │ ✓ Available (resets in 7 days)  │ │
 │ └─────────────────────────────────┘ │
 │                                     │
 └─────────────────────────────────────┘
@@ -466,6 +517,7 @@ After Premium Purchase:
 │ ┌─────────────────────────────────┐ │
 │ │ 👤 Mom                          │ │
 │ │    📧 Email ✓                   │ │
+│ │    ✈️ Telegram ✓                │ │
 │ │    📱 SMS ✓                     │ │
 │ │    💬 WhatsApp ✓                │ │
 │ └─────────────────────────────────┘ │
@@ -473,7 +525,7 @@ After Premium Purchase:
 └─────────────────────────────────────┘
 ```
 
-### Add Contact Sheet (Premium)
+### Add Contact Sheet
 
 ```
 ┌─────────────────────────────────────┐
@@ -497,11 +549,11 @@ After Premium Purchase:
 │                                     │
 │ NOTIFICATION CHANNELS               │
 │ ┌─────────────────────────────────┐ │
-│ │ ☑ Email                         │ │
-│ │ ☑ SMS                           │ │
-│ │ ☑ WhatsApp                      │ │
-│ │ ☐ Telegram    [Setup Required]  │ │
-│ │ ☐ Signal      [Coming Soon]     │ │
+│ │ ☑ Email         (Free)          │ │
+│ │ ☐ Telegram      (Free) [Setup]  │ │
+│ │ ☑ SMS           (Premium) 🔒    │ │
+│ │ ☑ WhatsApp      (Premium) 🔒    │ │
+│ │ ☐ Signal        [Coming Soon]   │ │
 │ └─────────────────────────────────┘ │
 │                                     │
 │ ┌─────────────────────────────────┐ │
@@ -552,11 +604,12 @@ After Premium Purchase:
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| SMS costs exceed $0.99 | Revenue loss | Monitor usage, adjust pricing if needed |
-| WhatsApp API approval delayed | Launch delay | Launch with Email + SMS first |
-| Low conversion rate | Revenue below costs | A/B test pricing, improve upgrade prompts |
-| Delivery failures | User trust lost | Implement retries, fallback channels |
+| SMS costs exceed revenue | Revenue loss | Rate limiting (1/week), $1.99 price point |
+| WhatsApp API approval delayed | Launch delay | Launch with Email + Telegram + SMS first |
+| Low conversion rate | Revenue below costs | Free tier has real value (Email + Telegram), incentivizes trust |
+| Delivery failures | User trust lost | Implement retries, multi-channel fallback |
 | Backend downtime during emergency | Critical failure | Use reliable provider, health monitoring |
+| Rate limit abuse complaints | User frustration | Clear UI explanation, email fallback always works |
 
 ---
 
