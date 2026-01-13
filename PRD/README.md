@@ -53,6 +53,7 @@ Each PRD should include:
 |-----|-------|--------|-------------|
 | [PRD-001](./PRD-001-initial-mvp.md) | Initial MVP | Completed | Core dead man's switch functionality |
 | [PRD-002](./PRD-002-freemium-notifications.md) | Freemium Notifications | Draft | Email (free) + SMS/messaging (paid) notification system |
+| [PRD-003](./PRD-003-contacts-picker.md) | Contacts Picker | Draft | iOS Contacts picker integration, max 3 contacts |
 
 ---
 

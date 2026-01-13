@@ -39,7 +39,7 @@ We will implement a **freemium model** with rate limiting:
 1. **Email + Telegram are free** - Both cost nothing to send, provides real value in free tier
 2. **SMS + WhatsApp are premium** - These cost money per message, gated behind paywall
 3. **One-time $1.99 payment** - Better margin than $0.99, still impulse-buy friendly
-4. **Rate limiting** - Max 1 emergency per 7 days, max 5 contacts, prevents abuse
+4. **Rate limiting** - Max 1 emergency per 7 days, max 3 contacts, prevents abuse
 
 **Financial analysis:**
 - Net revenue after Apple's 30% cut: ~$1.39

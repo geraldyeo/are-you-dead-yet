@@ -45,7 +45,7 @@ To prevent abuse and control costs, emergency notifications are rate limited:
 |-------|-------|-----------|
 | Max emergencies per week | 1 | Prevents accidental/abuse triggers |
 | Cooldown after emergency | 7 days | User must check in to reset |
-| Max contacts | 5 | Limits per-event cost exposure |
+| Max contacts | 3 | Limits per-event cost exposure (see PRD-003) |
 
 If rate limit is hit:
 - User sees explanation in app
