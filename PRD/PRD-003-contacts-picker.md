@@ -128,7 +128,59 @@ var canAddContact: Bool {
 - If contact has multiple emails: Show picker to choose one
 - Store only the selected values
 
-#### 4. Contact Updates
+#### 4. Manual Email Fallback
+
+**Scenario:** User selects a contact that has no email address in their address book.
+
+**Problem:** Email is a free-tier notification channel. Without email, free users can only use Telegram (which requires setup).
+
+**Solution:** Allow manual email entry when contact has no email.
+
+**User Experience:**
+```
+1. User selects contact "Dad" from picker
+2. Dad has phone but no email in Contacts
+3. Confirmation sheet shows:
+   - Name: Dad
+   - Phone: +65 9123 4567
+   - Email: (empty) [Add Email]
+4. User taps "Add Email"
+5. Email input field appears
+6. User types: dad@example.com
+7. Email field validates format
+8. User proceeds to channel selection
+```
+
+**Technical Implementation:**
+```swift
+struct ContactConfirmationSheet: View {
+    @State var contact: EmergencyContact
+    @State var showEmailInput: Bool = false
+    @State var manualEmail: String = ""
+
+    var body: some View {
+        // If no email from Contacts, show input field
+        if contact.email == nil {
+            if showEmailInput {
+                TextField("Email address", text: $manualEmail)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+            } else {
+                Button("Add Email") {
+                    showEmailInput = true
+                }
+            }
+        }
+    }
+}
+```
+
+**Validation:**
+- Basic email format validation (contains @ and .)
+- Show error for invalid format
+- Email is optional but recommended for free tier
+
+#### 5. Contact Updates
 
 **Scenario:** User updates contact info in iOS Contacts app
 
@@ -307,6 +359,26 @@ extension EmergencyContact {
 5. Proceeds to channel selection
 ```
 
+### Contact Has No Email (Manual Fallback)
+
+```
+1. User selects contact "Dad" from picker
+2. Dad has phone (+65 9123 4567) but no email
+3. Confirmation sheet shows:
+   - Name: Dad
+   - Phone: +65 9123 4567
+   - Email: Not available [+ Add Email]
+4. User taps "+ Add Email"
+5. Text field appears for email input
+6. User types: dad@example.com
+7. Field validates email format (green checkmark)
+8. User selects notification channels:
+   - Email ✓ (now available)
+   - Telegram (optional)
+9. Taps "Add Contact"
+10. Contact saved with manually entered email
+```
+
 ---
 
 ## UI/UX Considerations
@@ -343,7 +415,7 @@ When at 3/3:
 │ └─────────────────────────────────┘ │
 ```
 
-### Contact Confirmation Sheet
+### Contact Confirmation Sheet (With Email)
 
 ```
 ┌─────────────────────────────────────┐
@@ -371,6 +443,47 @@ When at 3/3:
 │ │         Add Contact             │ │
 │ └─────────────────────────────────┘ │
 └─────────────────────────────────────┘
+```
+
+### Contact Confirmation Sheet (No Email - Manual Fallback)
+
+```
+┌─────────────────────────────────────┐
+│ Add Emergency Contact               │
+├─────────────────────────────────────┤
+│                                     │
+│        👤                           │
+│       Dad                           │
+│                                     │
+│ CONTACT INFO                        │
+│ ┌─────────────────────────────────┐ │
+│ │ 📱 +65 9123 4567                │ │
+│ │ 📧 No email     [+ Add Email]   │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ ⚠️ Add an email to enable free      │
+│    notifications                    │
+│                                     │
+│ NOTIFICATION CHANNELS               │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Email         (Free) ⚠️       │ │
+│ │ ☐ Telegram      (Free) [Setup]  │ │
+│ │ ☐ SMS           (Premium) 🔒    │ │
+│ │ ☐ WhatsApp      (Premium) 🔒    │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │         Add Contact             │ │
+│ └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
+
+After tapping "+ Add Email":
+
+│ CONTACT INFO                        │
+│ ┌─────────────────────────────────┐ │
+│ │ 📱 +65 9123 4567                │ │
+│ │ 📧 [dad@example.com        ] ✓  │ │
+│ └─────────────────────────────────┘ │
 ```
 
 ---
@@ -404,6 +517,21 @@ When at 3/3:
 3. **Privacy** - No ongoing access to Contacts database
 4. **Edge cases** - Avoids issues when contact is deleted
 
+### Why Manual Email Fallback?
+
+**Problem:** Some contacts in iOS address book don't have email addresses, but email is a free-tier notification channel.
+
+**Options considered:**
+1. **Require email** - Only allow contacts with email (too restrictive)
+2. **Skip email** - Allow contact without email, rely on Telegram/premium (poor free UX)
+3. **Manual entry fallback** - Let user type email if missing (chosen)
+
+**Decision:** Option 3 - Manual email fallback because:
+- Keeps Contacts picker as primary flow (fast, error-free)
+- Only shows manual input when needed (contact has no email)
+- Ensures free tier users can always use email channel
+- Minimal friction for edge case
+
 ---
 
 ## Impact on Other PRDs
@@ -428,6 +556,9 @@ When at 3/3:
 - [ ] Update Settings UI with contact count (X/3)
 - [ ] Add disabled state for "Add" button when at limit
 - [ ] Handle edge case: contact with no phone or email
+- [ ] Add manual email input field for contacts without email
+- [ ] Add email format validation
+- [ ] Show warning when contact has no email
 - [ ] Update PRD-002 to reflect 3 contact limit
 
 ---
