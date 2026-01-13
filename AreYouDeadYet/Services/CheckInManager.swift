@@ -8,6 +8,9 @@ class CheckInManager: ObservableObject {
     private let checkInHistoryKey = "checkInHistory"
     private let emergencyContactsKey = "emergencyContacts"
 
+    /// Maximum number of emergency contacts allowed
+    static let maxContacts = 3
+
     var lastCheckIn: CheckIn? {
         checkInHistory.first
     }
@@ -21,6 +24,16 @@ class CheckInManager: ObservableObject {
         guard let lastCheckIn = lastCheckIn else { return Int.max }
         let components = Calendar.current.dateComponents([.day], from: lastCheckIn.date, to: Date())
         return components.day ?? Int.max
+    }
+
+    /// Check if user can add more emergency contacts
+    var canAddContact: Bool {
+        emergencyContacts.count < Self.maxContacts
+    }
+
+    /// Number of remaining contact slots
+    var remainingContactSlots: Int {
+        max(0, Self.maxContacts - emergencyContacts.count)
     }
 
     init() {
@@ -41,9 +54,57 @@ class CheckInManager: ObservableObject {
         rescheduleNotifications()
     }
 
-    func addEmergencyContact(_ contact: EmergencyContact) {
+    /// Result of attempting to add a contact
+    enum AddContactResult {
+        case success
+        case limitReached
+        case duplicate(existingName: String)
+    }
+
+    /// Check if a contact is a duplicate (matches by phone or email)
+    func isDuplicateContact(_ contact: EmergencyContact) -> EmergencyContact? {
+        emergencyContacts.first { existing in
+            // Match by phone number (if both have one)
+            if let existingPhone = existing.phoneNumber,
+               let newPhone = contact.phoneNumber,
+               !existingPhone.isEmpty && !newPhone.isEmpty {
+                // Normalize phone numbers for comparison (remove non-digits)
+                let normalizedExisting = existingPhone.filter { $0.isNumber }
+                let normalizedNew = newPhone.filter { $0.isNumber }
+                if normalizedExisting == normalizedNew {
+                    return true
+                }
+            }
+
+            // Match by email (if both have one)
+            if let existingEmail = existing.email,
+               let newEmail = contact.email,
+               !existingEmail.isEmpty && !newEmail.isEmpty {
+                if existingEmail.lowercased() == newEmail.lowercased() {
+                    return true
+                }
+            }
+
+            return false
+        }
+    }
+
+    /// Add an emergency contact with validation
+    @discardableResult
+    func addEmergencyContact(_ contact: EmergencyContact) -> AddContactResult {
+        // Check limit
+        guard canAddContact else {
+            return .limitReached
+        }
+
+        // Check for duplicate
+        if let existing = isDuplicateContact(contact) {
+            return .duplicate(existingName: existing.name)
+        }
+
         emergencyContacts.append(contact)
         saveEmergencyContacts()
+        return .success
     }
 
     func removeEmergencyContacts(at offsets: IndexSet) {

@@ -34,7 +34,9 @@ class EmergencyContactService {
         """
 
         for contact in contacts {
-            sendSMS(to: contact.phoneNumber, message: message)
+            if let phoneNumber = contact.phoneNumber {
+                sendSMS(to: phoneNumber, message: message)
+            }
 
             if let email = contact.email {
                 sendEmail(to: email, subject: "URGENT: Check-in Alert", body: message)

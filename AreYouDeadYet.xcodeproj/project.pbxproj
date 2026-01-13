@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5CBB10EF2F163FA100F0DA1A /* ContactConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBB10ED2F163FA100F0DA1A /* ContactConfirmationSheet.swift */; };
+		5CBB10F02F163FA100F0DA1A /* ContactPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBB10EE2F163FA100F0DA1A /* ContactPicker.swift */; };
 		A1000001 /* AreYouDeadYetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* AreYouDeadYetApp.swift */; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* ContentView.swift */; };
 		A1000003 /* CheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* CheckInView.swift */; };
@@ -22,6 +24,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5CBB10ED2F163FA100F0DA1A /* ContactConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactConfirmationSheet.swift; sourceTree = "<group>"; };
+		5CBB10EE2F163FA100F0DA1A /* ContactPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPicker.swift; sourceTree = "<group>"; };
 		A2000000 /* AreYouDeadYet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AreYouDeadYet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000001 /* AreYouDeadYetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AreYouDeadYetApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -75,6 +79,8 @@
 		A4000002 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				5CBB10ED2F163FA100F0DA1A /* ContactConfirmationSheet.swift */,
+				5CBB10EE2F163FA100F0DA1A /* ContactPicker.swift */,
 				A2000003 /* CheckInView.swift */,
 				A2000004 /* SettingsView.swift */,
 			);
@@ -195,6 +201,8 @@
 				A1000006 /* NotificationService.swift in Sources */,
 				A1000007 /* LocationService.swift in Sources */,
 				A1000008 /* EmergencyContactService.swift in Sources */,
+				5CBB10EF2F163FA100F0DA1A /* ContactConfirmationSheet.swift in Sources */,
+				5CBB10F02F163FA100F0DA1A /* ContactPicker.swift in Sources */,
 				A1000009 /* CheckIn.swift in Sources */,
 				A1000010 /* EmergencyContact.swift in Sources */,
 			);
