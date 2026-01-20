@@ -53,3 +53,6 @@ iOSInjectionProject/
 *~
 
 WARP.md
+
+# Git worktrees
+.worktrees/
